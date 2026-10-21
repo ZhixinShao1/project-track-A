@@ -9,6 +9,8 @@ from pathlib import Path
 import mujoco
 import mujoco.viewer
 
+import cv2
+
 
 MODEL_PATH = (
     Path(__file__).parent
@@ -21,6 +23,12 @@ MODEL_PATH = (
 def main():
     model = mujoco.MjModel.from_xml_path(str(MODEL_PATH))
     data = mujoco.MjData(model)
+
+    renderer = mujoco.Renderer(
+    model,
+    height=240,
+    width=320
+    )
 
 
 
@@ -68,7 +76,9 @@ def main():
 
     print("Left motor ID:", left_motor_id)
     print("Right motor ID:", right_motor_id)
+
     last_print_time = -1
+    last_camera_time = -1.0
 
     time_history = []
 
@@ -84,8 +94,8 @@ def main():
 
             
             
-            v_command = 0.05
-            omega_command = 0.2
+            v_command = 0.03
+            omega_command = 0.0
 
             omega_left, omega_right = velocity_to_wheels(
                 v_command,
@@ -100,6 +110,32 @@ def main():
            
 
             mujoco.mj_step(model, data)
+           
+# FRONT CAMERA
+
+
+            if data.time - last_camera_time >= 0.05:
+
+                renderer.update_scene(
+                    data,
+                    camera="front_camera"
+                )
+
+                rgb_image = renderer.render()
+
+                bgr_image = cv2.cvtColor(
+                    rgb_image,
+                    cv2.COLOR_RGB2BGR
+                )
+
+                cv2.imshow(
+                    "TurtleBot Front Camera",
+                    bgr_image
+                )
+
+                cv2.waitKey(1)
+
+                last_camera_time = data.time
 
 
 
@@ -209,6 +245,10 @@ def main():
             viewer.sync()
 
             time.sleep(model.opt.timestep)
+
+
+    renderer.close()
+    cv2.destroyAllWindows()
 
 
     plot_trajectory(
