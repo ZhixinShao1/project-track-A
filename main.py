@@ -4,6 +4,13 @@ from src.control.differential_drive import velocity_to_wheels
 from src.utils.transforms import quaternion_to_yaw
 from src.utils.plotting import plot_trajectory
 from src.perception.aruco_detector import ArucoDetector
+from config import (
+    CAMERA_WIDTH,
+    CAMERA_HEIGHT,
+    CAMERA_FOVY,
+    ARUCO_MARKER_ID,
+    ARUCO_MARKER_SIZE
+)
 import time
 from pathlib import Path
 
@@ -11,6 +18,7 @@ import mujoco
 import mujoco.viewer
 
 import cv2
+import numpy as np
 
 
 MODEL_PATH = (
@@ -27,12 +35,61 @@ def main():
 
     renderer = mujoco.Renderer(
     model,
-    height=240,
-    width=320
+    height=CAMERA_HEIGHT,
+    width=CAMERA_WIDTH
     )
 
+
+# CAMERA INTRINSIC MATRIX
+
+    fovy_rad = np.deg2rad(
+        CAMERA_FOVY
+    )
+
+    fy = CAMERA_HEIGHT / (
+        2.0 * np.tan(
+            fovy_rad / 2.0
+        )
+    )
+
+    fx = fy
+
+    cx = (
+        CAMERA_WIDTH - 1
+    ) / 2.0
+
+    cy = (
+        CAMERA_HEIGHT - 1
+    ) / 2.0
+
+    camera_matrix = np.array(
+        [
+            [fx, 0.0, cx],
+            [0.0, fy, cy],
+            [0.0, 0.0, 1.0]
+        ],
+        dtype=np.float64
+    )
+
+    distortion_coefficients = np.zeros(
+        (5, 1),
+        dtype=np.float64
+    )
+
+    print(
+        "Camera matrix:"
+    )
+
+    print(
+        camera_matrix
+    )
+
+
     aruco_detector = ArucoDetector(
-    target_id=0
+        camera_matrix=camera_matrix,
+        distortion_coefficients=distortion_coefficients,
+        marker_size=ARUCO_MARKER_SIZE,
+        target_id=ARUCO_MARKER_ID
     )
 
 
@@ -135,10 +192,14 @@ def main():
                 )
 
     # ArUco detection
-                camera_display, marker_detected, marker_corners = (
-                    aruco_detector.detect(
-                        bgr_image
-                    )
+                (
+                    camera_display,
+                    marker_detected,
+                    marker_corners,
+                    marker_range,
+                    marker_bearing
+                ) = aruco_detector.detect(
+                    bgr_image
                 )
 
     # Print only when detection state changes
@@ -157,9 +218,15 @@ def main():
                     camera_display
                 )
 
+
+                
+
+
                 cv2.waitKey(1)
 
                 last_camera_time = data.time
+
+        
 
 
 
