@@ -1,3 +1,5 @@
+
+from src.control.differential_drive import velocity_to_wheels
 import time
 from pathlib import Path
 
@@ -38,9 +40,22 @@ def main():
 
         while viewer.is_running():
 
-            # Test 1: drive forward
-            data.ctrl[left_motor_id] = 2.0
-            data.ctrl[right_motor_id] = 2.0
+            
+            
+            v_command = 0.0
+            omega_command = 0.5
+
+            omega_left, omega_right = velocity_to_wheels(
+                v_command,
+                omega_command
+            )
+
+            data.ctrl[left_motor_id] = omega_left
+            data.ctrl[right_motor_id] = omega_right
+            
+            
+            
+           
 
             mujoco.mj_step(model, data)
 
