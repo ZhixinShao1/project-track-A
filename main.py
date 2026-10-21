@@ -3,6 +3,7 @@ from src.estimation.odometry import Odometry
 from src.control.differential_drive import velocity_to_wheels
 from src.utils.transforms import quaternion_to_yaw
 from src.utils.plotting import plot_trajectory
+from src.perception.aruco_detector import ArucoDetector
 import time
 from pathlib import Path
 
@@ -28,6 +29,10 @@ def main():
     model,
     height=240,
     width=320
+    )
+
+    aruco_detector = ArucoDetector(
+    target_id=0
     )
 
 
@@ -79,6 +84,7 @@ def main():
 
     last_print_time = -1
     last_camera_time = -1.0
+    last_marker_state = False
 
     time_history = []
 
@@ -94,7 +100,7 @@ def main():
 
             
             
-            v_command = 0.03
+            v_command = 0.0
             omega_command = 0.0
 
             omega_left, omega_right = velocity_to_wheels(
@@ -128,9 +134,27 @@ def main():
                     cv2.COLOR_RGB2BGR
                 )
 
+    # ArUco detection
+                camera_display, marker_detected, marker_corners = (
+                    aruco_detector.detect(
+                        bgr_image
+                    )
+                )
+
+    # Print only when detection state changes
+                if marker_detected != last_marker_state:
+
+                    if marker_detected:
+                        print("ArUco marker detected.")
+
+                    else:
+                        print("ArUco marker lost.")
+
+                    last_marker_state = marker_detected
+
                 cv2.imshow(
                     "TurtleBot Front Camera",
-                    bgr_image
+                    camera_display
                 )
 
                 cv2.waitKey(1)

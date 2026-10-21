@@ -14,6 +14,23 @@
     <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
       markrgb="0.8 0.8 0.8" width="300" height="300"/>
     <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
+
+    <mesh
+    name="aruco_quad"
+    file="aruco_quad.obj"
+    inertia="shell"/>
+
+    <texture
+        name="aruco_texture"
+        type="2d"
+        file="assets/aruco_marker_0.png"/>
+
+    <material
+        name="aruco_material"
+        texture="aruco_texture"
+        emission="1"
+        reflectance="0"/>
+
   </asset>
 
   <worldbody>
@@ -21,11 +38,15 @@
     <geom name="floor" size="0 0 0.05" type="plane" material="groundplane"/>
 
     <geom
-        name="camera_test_box"
-        type="box"
+        name="aruco_marker"
+        type="mesh"
+        mesh="aruco_quad"
         pos="1.0 0 0.15"
-        size="0.10 0.10 0.15"
-        rgba="1 0 0 1"/>
+        material="aruco_material"
+        contype="0"
+        conaffinity="0"/>
+
+    
 
   </worldbody>
 </mujoco>
