@@ -11,6 +11,10 @@ CAMERA_WIDTH = 320
 CAMERA_HEIGHT = 240
 CAMERA_FOVY = 60.0
 
+# Camera position relative to robot base
+CAMERA_OFFSET_X = 0.10
+CAMERA_OFFSET_Y = 0.0
+
 # ArUco marker
 ARUCO_MARKER_ID = 0
 
@@ -18,3 +22,24 @@ ARUCO_MARKER_ID = 0
 # The full textured board is 0.24 m,
 # while the black marker occupies 600/800 of it.
 ARUCO_MARKER_SIZE = 0.18
+
+
+# EKF
+
+
+# ArUco marker world position
+ARUCO_WORLD_X = 1.0
+ARUCO_WORLD_Y = 0.0
+
+# Initial EKF uncertainty
+EKF_INITIAL_POSITION_STD = 0.02
+EKF_INITIAL_HEADING_STD = 0.035
+
+# Process noise
+EKF_PROCESS_X_STD = 0.01
+EKF_PROCESS_Y_STD = 0.01
+EKF_PROCESS_THETA_STD = 0.02
+
+# Camera measurement noise
+EKF_RANGE_STD = 0.02
+EKF_BEARING_STD = 0.035

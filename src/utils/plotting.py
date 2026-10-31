@@ -5,7 +5,9 @@ def plot_trajectory(
     true_x,
     true_y,
     odom_x,
-    odom_y
+    odom_y,
+    ekf_x,
+    ekf_y
 ):
     plt.figure()
 
@@ -21,11 +23,17 @@ def plot_trajectory(
         label="Wheel Odometry"
     )
 
+    plt.plot(
+        ekf_x,
+        ekf_y,
+        label="EKF Estimate"
+    )
+
     plt.xlabel("x [m]")
     plt.ylabel("y [m]")
 
     plt.title(
-        "Ground Truth vs Wheel Odometry"
+        "Robot State Estimation Comparison"
     )
 
     plt.axis("equal")

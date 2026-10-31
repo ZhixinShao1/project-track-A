@@ -95,30 +95,31 @@ class ArucoDetector:
                         corners[index]
                     )
 
-                    image_points = (
-                        target_corners
-                        .reshape(4, 2)
-                        .astype(np.float32)
+                    image_points = np.ascontiguousarray(
+                        target_corners.reshape(4, 2),
+                        dtype=np.float32
                     )
-
                     success, rvec, tvec = (
                         cv2.solvePnP(
                             self.object_points,
                             image_points,
                             self.camera_matrix,
                             self.distortion_coefficients,
-                            flags=cv2.SOLVEPNP_IPPE_SQUARE
+                            flags=cv2.SOLVEPNP_ITERATIVE
                         )
                     )
 
-                    if success:
+                    if (
+                        success
+                        and
+                        np.all(np.isfinite(rvec))
+                        and
+                        np.all(np.isfinite(tvec))
+                        and
+                        tvec[2, 0] > 0.0
+                    ):
 
-                        # Marker position in OpenCV
-                        # camera coordinates:
-                        #
-                        # x = right
-                        # y = down
-                        # z = forward
+                        
 
                         marker_x = float(
                             tvec[0, 0]
@@ -136,19 +137,19 @@ class ArucoDetector:
                         )
 
                         # Horizontal bearing
-                        bearing_rad = np.arctan2(
+                        bearing_rad = -np.arctan2(
                             marker_x,
                             marker_z
                         )
 
-                        cv2.drawFrameAxes(
-                            annotated_image,
-                            self.camera_matrix,
-                            self.distortion_coefficients,
-                            rvec,
-                            tvec,
-                            self.marker_size * 0.5
-                        )
+                        #cv2.drawFrameAxes(
+                         #   annotated_image,
+                          #  self.camera_matrix,
+                           # self.distortion_coefficients,
+                            #rvec,
+                            #tvec,
+                            #self.marker_size * 0.2
+                        #)
 
                         cv2.putText(
                             annotated_image,

@@ -9,8 +9,20 @@ from config import (
     CAMERA_HEIGHT,
     CAMERA_FOVY,
     ARUCO_MARKER_ID,
-    ARUCO_MARKER_SIZE
+    ARUCO_MARKER_SIZE,
+    ARUCO_WORLD_X,
+    ARUCO_WORLD_Y,
+    EKF_INITIAL_POSITION_STD,
+    EKF_INITIAL_HEADING_STD,
+    EKF_PROCESS_X_STD,
+    EKF_PROCESS_Y_STD,
+    EKF_PROCESS_THETA_STD,
+    EKF_RANGE_STD,
+    EKF_BEARING_STD,
+    CAMERA_OFFSET_X,
+    CAMERA_OFFSET_Y
 )
+from src.estimation.ekf import ExtendedKalmanFilter
 import time
 from pathlib import Path
 
@@ -121,6 +133,49 @@ def main():
     )
 
 
+    initial_covariance = np.diag(
+        [
+            EKF_INITIAL_POSITION_STD ** 2,
+            EKF_INITIAL_POSITION_STD ** 2,
+            EKF_INITIAL_HEADING_STD ** 2
+        ]
+    )
+
+    process_noise = np.diag(
+        [
+            EKF_PROCESS_X_STD ** 2,
+            EKF_PROCESS_Y_STD ** 2,
+            EKF_PROCESS_THETA_STD ** 2
+        ]
+    )
+
+    measurement_noise = np.diag(
+        [
+            EKF_RANGE_STD ** 2,
+            EKF_BEARING_STD ** 2
+        ]
+    )
+
+    ekf = ExtendedKalmanFilter(
+        initial_state=[
+            0.0,
+            0.0,
+            0.0
+        ],
+        initial_covariance=initial_covariance,
+        process_noise=process_noise,
+        measurement_noise=measurement_noise,
+        landmark_position=[
+            ARUCO_WORLD_X,
+            ARUCO_WORLD_Y
+        ]
+    )
+
+
+
+
+
+
 
     print("MuJoCo model loaded successfully.")
 
@@ -151,14 +206,17 @@ def main():
     odom_x_history = []
     odom_y_history = []
 
+    ekf_x_history = []
+    ekf_y_history = []
+
     with mujoco.viewer.launch_passive(model, data) as viewer:
 
         while viewer.is_running():
 
             
             
-            v_command = 0.0
-            omega_command = 0.0
+            v_command = 0.03
+            omega_command = 0.05
 
             omega_left, omega_right = velocity_to_wheels(
                 v_command,
@@ -173,6 +231,38 @@ def main():
            
 
             mujoco.mj_step(model, data)
+
+
+ # Read wheel encoder
+            omega_left_meas, omega_right_meas = encoder.read(
+                data
+            )
+
+# Convert wheel measurements to body velocity
+            v_enc, omega_enc = encoder.body_velocity(
+                omega_left_meas,
+                omega_right_meas
+            )
+
+# Update wheel odometry
+            odom_state = odometry.update(
+                v_enc,
+                omega_enc,
+                model.opt.timestep
+            )
+
+            
+# EKF PREDICTION
+
+
+            ekf.predict(
+                v_enc,
+                omega_enc,
+                model.opt.timestep
+            )
+
+
+
            
 # FRONT CAMERA
 
@@ -202,6 +292,81 @@ def main():
                     bgr_image
                 )
 
+
+
+# CAMERA FRAME  ROBOT BASE FRAME
+
+
+                base_range = None
+                base_bearing = None
+
+                if (
+                    marker_detected
+                    and
+                    marker_range is not None
+                    and
+                    marker_bearing is not None
+                    and
+                    np.isfinite(marker_range)
+                    and
+                    np.isfinite(marker_bearing)
+                ):
+
+                    # Landmark position relative to camera
+                    landmark_forward_camera = (
+                        marker_range
+                        * np.cos(marker_bearing)
+                    )
+
+                    landmark_left_camera = (
+                        marker_range
+                        * np.sin(marker_bearing)
+                    )
+
+                    # Convert to robot base frame
+                    landmark_forward_base = (
+                        CAMERA_OFFSET_X
+                        + landmark_forward_camera
+                    )
+
+                    landmark_left_base = (
+                        CAMERA_OFFSET_Y
+                        + landmark_left_camera
+                    )
+
+                    base_range = np.sqrt(
+                        landmark_forward_base ** 2
+                        +
+                        landmark_left_base ** 2
+                    )
+
+                    base_bearing = np.arctan2(
+                        landmark_left_base,
+                        landmark_forward_base
+                    )
+
+
+# EKF camera update
+                if (
+                    marker_detected
+                    and
+                    base_range is not None
+                    and
+                    base_bearing is not None
+                    and
+                    np.isfinite(base_range)
+                    and
+                    np.isfinite(base_bearing)
+                ):
+
+                    ekf.update_range_bearing(
+                        base_range,
+                        base_bearing
+                    )
+
+                ekf_state = ekf.state.copy()
+
+
     # Print only when detection state changes
                 if marker_detected != last_marker_state:
 
@@ -225,30 +390,6 @@ def main():
                 cv2.waitKey(1)
 
                 last_camera_time = data.time
-
-        
-
-
-
-            # Read wheel encoder
-            omega_left_meas, omega_right_meas = encoder.read(
-                data
-            )
-
-# Convert wheel measurements to body velocity
-            v_enc, omega_enc = encoder.body_velocity(
-                omega_left_meas,
-                omega_right_meas
-            )
-
-# Update wheel odometry
-            odom_state = odometry.update(
-                v_enc,
-                omega_enc,
-                model.opt.timestep
-            )
-
-
 
 
            
@@ -305,6 +446,13 @@ def main():
                 odom_state[1]
             )
 
+            ekf_x_history.append(
+                ekf_state[0]
+            )
+
+            ekf_y_history.append(
+                ekf_state[1]
+            )
             current_second = int(data.time)
 
 
@@ -328,6 +476,26 @@ def main():
                     f"theta={odom_state[2]:.3f}"
                 )
 
+                print(
+                    f"EKF:  "
+                    f"x={ekf_state[0]:.3f}, "
+                    f"y={ekf_state[1]:.3f}, "
+                    f"theta={ekf_state[2]:.3f}"
+                )
+
+                print(
+                    f"CAMERA: "
+                    f"range={marker_range:.3f}, "
+                    f"bearing={np.degrees(marker_bearing):.2f} deg"
+                )
+
+                print(
+                    f"BASE:   "
+                    f"range={base_range:.3f}, "
+                    f"bearing={np.degrees(base_bearing):.2f} deg"
+                )
+
+                
                 last_print_time = current_second
                 
 
@@ -346,7 +514,9 @@ def main():
     true_x_history,
     true_y_history,
     odom_x_history,
-    odom_y_history
+    odom_y_history,
+    ekf_x_history,
+    ekf_y_history
     )
 
 
