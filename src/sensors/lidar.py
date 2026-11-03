@@ -39,6 +39,14 @@ class Lidar2D:
             endpoint=False
         )
 
+        self.geomgroup = np.ones(
+            6,
+            dtype=np.uint8
+        )
+
+        self.geomgroup[1] = 0
+  
+
 
     def scan(self, data):
 
@@ -79,7 +87,7 @@ class Lidar2D:
                 data,
                 origin,
                 world_direction,
-                None,
+                self.geomgroup,
                 1,
                 int(self.body_id),
                 geom_id,

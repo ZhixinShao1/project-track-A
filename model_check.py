@@ -25,9 +25,9 @@ def main():
     print("\nB matrix:")
     print(B)
 
-    # -----------------------------
+
     # Controllability
-    # -----------------------------
+    
 
     controllability = controllability_matrix(A, B)
 
@@ -43,9 +43,9 @@ def main():
         controllability_rank
     )
 
-    # -----------------------------
+    
     # Observability
-    # -----------------------------
+    
 
     # Camera provides full pose:
     # z = [x, y, theta]

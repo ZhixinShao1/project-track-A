@@ -39,6 +39,7 @@ import numpy as np
 from src.control.waypoint_controller import WaypointController
 from src.sensors.lidar import Lidar2D
 from src.utils.lidar_visualization import draw_lidar_scan
+from src.control.obstacle_avoidance import ObstacleAvoidance
 
 
 MODEL_PATH = (
@@ -185,6 +186,7 @@ def main():
     )
 
     waypoint_controller = WaypointController()
+    obstacle_avoidance = ObstacleAvoidance()
 
     waypoints = np.array(
         WAYPOINTS,
@@ -250,76 +252,6 @@ def main():
 
         while viewer.is_running():
 
-            if not all_waypoints_reached:
-
-                target_waypoint = waypoints[
-                    current_waypoint_index
-                ]
-
-                (
-                    v_command,
-                    omega_command,
-                    waypoint_reached,
-                    waypoint_distance
-                ) = waypoint_controller.compute(
-                    ekf_state,
-                    target_waypoint
-                )
-
-                
-
-            else:
-
-                v_command = 0.0
-                omega_command = 0.0
-
-                waypoint_reached = True
-                waypoint_distance = 0.0
-
-
-            if (
-                waypoint_reached
-                and
-                not all_waypoints_reached
-            ):
-
-                print(
-                    f"\nWaypoint "
-                    f"{current_waypoint_index + 1} reached."
-                )
-
-                current_waypoint_index += 1
-
-                if current_waypoint_index >= len(
-                    waypoints
-                ):
-
-                    all_waypoints_reached = True
-
-                    print(
-                        "\nAll waypoints reached."
-                    )
-
-
-            
-
-
-
-            omega_left, omega_right = velocity_to_wheels(
-                v_command,
-                omega_command
-            )
-
-            data.ctrl[left_motor_id] = omega_left
-            data.ctrl[right_motor_id] = omega_right
-            
-            
-            
-           
-
-            mujoco.mj_step(model, data)
-
-            
 # 2D LIDAR
 
 
@@ -348,6 +280,97 @@ def main():
                 cv2.waitKey(1)
 
                 last_lidar_time = data.time
+
+
+            if not all_waypoints_reached:
+
+                target_waypoint = waypoints[
+                    current_waypoint_index
+                ]
+
+                (
+                    nominal_v,
+                    nominal_omega,
+                    waypoint_reached,
+                    waypoint_distance
+                ) = waypoint_controller.compute(
+                    ekf_state,
+                    target_waypoint
+                )
+
+                
+
+            else:
+
+                nominal_v = 0.0
+                nominal_omega = 0.0
+
+                waypoint_reached = True
+                waypoint_distance = 0.0
+
+
+            if (
+                waypoint_reached
+                and
+                not all_waypoints_reached
+            ):
+
+                print(
+                    f"\nWaypoint "
+                    f"{current_waypoint_index + 1} reached."
+                )
+
+                current_waypoint_index += 1
+
+                if current_waypoint_index >= len(
+                    waypoints
+                ):
+
+                    all_waypoints_reached = True
+
+                    print(
+                        "\nAll waypoints reached."
+                    )
+
+                
+# LIDAR OBSTACLE AVOIDANCE
+
+
+            (
+                v_command,
+                omega_command,
+                obstacle_detected,
+                front_distance,
+                left_distance,
+                right_distance
+            ) = obstacle_avoidance.compute(
+                lidar_angles,
+                lidar_ranges,
+                nominal_v,
+                nominal_omega,
+                ekf_state,
+                waypoint_controller,
+                goal_active=not all_waypoints_reached,
+                primary_goal=target_waypoint
+            )
+
+
+            omega_left, omega_right = velocity_to_wheels(
+                v_command,
+                omega_command
+            )
+
+            data.ctrl[left_motor_id] = omega_left
+            data.ctrl[right_motor_id] = omega_right
+            
+            
+            
+           
+
+            mujoco.mj_step(model, data)
+
+            
+
 
 
  # Read wheel encoder
@@ -481,7 +504,7 @@ def main():
                         base_bearing
                     )
 
-                ekf_state = ekf.state.copy()
+            #ekf_state = ekf.state.copy()
 
 
     # Print only when detection state changes
@@ -507,7 +530,7 @@ def main():
                 cv2.waitKey(1)
 
                 last_camera_time = data.time
-
+            ekf_state = ekf.state.copy()
 
            
 # GROUND TRUTH - EVALUATION ONLY
@@ -638,6 +661,24 @@ def main():
                         "CONTROL: "
                         "All waypoints completed."
                     )
+
+                if (
+                    front_distance is not None
+                ):
+
+                    print(
+                        f"LIDAR: "
+                        f"front={front_distance:.3f} m, "
+                        f"left={left_distance:.3f} m, "
+                        f"right={right_distance:.3f} m"
+                    )
+
+                    if obstacle_detected:
+
+                        print(
+                            "AVOIDANCE: obstacle detected"
+                        )
+                
 
                 if (
                     marker_detected
