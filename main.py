@@ -24,7 +24,8 @@ from config import (
     EKF_BEARING_STD,
     CAMERA_OFFSET_X,
     CAMERA_OFFSET_Y,
-    WAYPOINTS
+    WAYPOINTS,
+    LIDAR_UPDATE_INTERVAL
 )
 from src.estimation.ekf import ExtendedKalmanFilter
 import time
@@ -36,6 +37,8 @@ import mujoco.viewer
 import cv2
 import numpy as np
 from src.control.waypoint_controller import WaypointController
+from src.sensors.lidar import Lidar2D
+from src.utils.lidar_visualization import draw_lidar_scan
 
 
 MODEL_PATH = (
@@ -133,6 +136,11 @@ def main():
         noise_std_right=0.03
     )
 
+    lidar = Lidar2D(
+        model,
+        site_name="lidar_site"
+    )
+
     odometry = Odometry(
         initial_state=[0.0, 0.0, 0.0]
     )
@@ -212,6 +220,10 @@ def main():
 
     last_print_time = -1
     last_camera_time = -1.0
+    last_lidar_time = -1.0
+
+    lidar_angles = None
+    lidar_ranges = None
     last_marker_state = False
 
     time_history = []
@@ -253,6 +265,8 @@ def main():
                     ekf_state,
                     target_waypoint
                 )
+
+                
 
             else:
 
@@ -304,6 +318,36 @@ def main():
            
 
             mujoco.mj_step(model, data)
+
+            
+# 2D LIDAR
+
+
+            if (
+                data.time - last_lidar_time
+                >= LIDAR_UPDATE_INTERVAL
+            ):
+
+                (
+                    lidar_angles,
+                    lidar_ranges
+                ) = lidar.scan(
+                    data
+                )
+
+                lidar_display = draw_lidar_scan(
+                    lidar_angles,
+                    lidar_ranges
+                )
+
+                cv2.imshow(
+                    "TurtleBot 2D LiDAR",
+                    lidar_display
+                )
+
+                cv2.waitKey(1)
+
+                last_lidar_time = data.time
 
 
  # Read wheel encoder
@@ -617,6 +661,17 @@ def main():
                 else:
                     print(
                         "CAMERA: ArUco marker not visible"
+                    )
+
+                if lidar_ranges is not None:
+
+                    nearest_obstacle = np.min(
+                        lidar_ranges
+                    )
+
+                    print(
+                        f"LIDAR: "
+                        f"nearest={nearest_obstacle:.3f} m"
                     )
 
                 

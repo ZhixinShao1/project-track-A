@@ -46,6 +46,14 @@
         contype="0"
         conaffinity="0"/>
 
+    <!--> Temporary LiDAR test obstacle -->
+    <geom
+        name="lidar_test_obstacle"
+        type="box"
+        pos="0.45 -0.30 0.15"
+        size="0.08 0.08 0.15"
+        rgba="0.2 0.2 0.8 1"/>
+
     
 
   </worldbody>

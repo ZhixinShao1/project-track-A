@@ -46,6 +46,13 @@
       <geom pos="-0.049 0 0.1255" mesh="lds" class="collision"/>
       <geom size="0.0075 0.015 0.0135" pos="0.078 0 0.107" type="box" material="grey"/>
 
+      <!-- 2D LiDAR ray origin -->
+      <site
+          name="lidar_site"
+          pos="-0.049 0 0.1255"
+          size="0.01"
+          rgba="1 0 0 1"/>
+
       <camera
           name="front_camera"
           pos="0.10 0 0.13"
