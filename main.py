@@ -24,8 +24,7 @@ from config import (
     EKF_BEARING_STD,
     CAMERA_OFFSET_X,
     CAMERA_OFFSET_Y,
-    WAYPOINT_X,
-    WAYPOINT_Y
+    WAYPOINTS
 )
 from src.estimation.ekf import ExtendedKalmanFilter
 import time
@@ -179,15 +178,14 @@ def main():
 
     waypoint_controller = WaypointController()
 
-    target_waypoint = np.array(
-        [
-            WAYPOINT_X,
-            WAYPOINT_Y
-        ],
+    waypoints = np.array(
+        WAYPOINTS,
         dtype=float
     )
 
-    waypoint_reached_message_shown = False
+    current_waypoint_index = 0
+
+    all_waypoints_reached = False
 
 
 
@@ -240,28 +238,56 @@ def main():
 
         while viewer.is_running():
 
-            (
-                v_command,
-                omega_command,
-                waypoint_reached,
-                waypoint_distance
-            ) = waypoint_controller.compute(
-                ekf_state,
-                target_waypoint
-            )
+            if not all_waypoints_reached:
+
+                target_waypoint = waypoints[
+                    current_waypoint_index
+                ]
+
+                (
+                    v_command,
+                    omega_command,
+                    waypoint_reached,
+                    waypoint_distance
+                ) = waypoint_controller.compute(
+                    ekf_state,
+                    target_waypoint
+                )
+
+            else:
+
+                v_command = 0.0
+                omega_command = 0.0
+
+                waypoint_reached = True
+                waypoint_distance = 0.0
 
 
             if (
                 waypoint_reached
                 and
-                not waypoint_reached_message_shown
+                not all_waypoints_reached
             ):
 
                 print(
-                    "\nWaypoint reached."
+                    f"\nWaypoint "
+                    f"{current_waypoint_index + 1} reached."
                 )
 
-                waypoint_reached_message_shown = True
+                current_waypoint_index += 1
+
+                if current_waypoint_index >= len(
+                    waypoints
+                ):
+
+                    all_waypoints_reached = True
+
+                    print(
+                        "\nAll waypoints reached."
+                    )
+
+
+            
 
 
 
@@ -550,24 +576,48 @@ def main():
                     f"theta={ekf_state[2]:.3f}"
                 )
 
-                print(
-                    f"CONTROL: "
-                    f"distance={waypoint_distance:.3f} m, "
-                    f"v={v_command:.3f} m/s, "
-                    f"omega={omega_command:.3f} rad/s"
-                )
+                if not all_waypoints_reached:
 
-                print(
-                    f"CAMERA: "
-                    f"range={marker_range:.3f}, "
-                    f"bearing={np.degrees(marker_bearing):.2f} deg"
-                )
+                    print(
+                        f"CONTROL: "
+                        f"waypoint="
+                        f"{current_waypoint_index + 1}/"
+                        f"{len(waypoints)}, "
+                        f"distance={waypoint_distance:.3f} m, "
+                        f"v={v_command:.3f} m/s, "
+                        f"omega={omega_command:.3f} rad/s"
+                    )
 
-                print(
-                    f"BASE:   "
-                    f"range={base_range:.3f}, "
-                    f"bearing={np.degrees(base_bearing):.2f} deg"
-                )
+                else:
+
+                    print(
+                        "CONTROL: "
+                        "All waypoints completed."
+                    )
+
+                if (
+                    marker_detected
+                    and marker_range is not None
+                    and marker_bearing is not None
+                    and base_range is not None
+                    and base_bearing is not None
+                ):
+                    print(
+                        f"CAMERA: "
+                        f"range={marker_range:.3f}, "
+                        f"bearing={np.degrees(marker_bearing):.2f} deg"
+                    )
+
+                    print(
+                        f"BASE:   "
+                        f"range={base_range:.3f}, "
+                        f"bearing={np.degrees(base_bearing):.2f} deg"
+                    )
+
+                else:
+                    print(
+                        "CAMERA: ArUco marker not visible"
+                    )
 
                 
                 last_print_time = current_second
