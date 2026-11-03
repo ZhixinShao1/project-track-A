@@ -23,7 +23,9 @@ from config import (
     EKF_RANGE_STD,
     EKF_BEARING_STD,
     CAMERA_OFFSET_X,
-    CAMERA_OFFSET_Y
+    CAMERA_OFFSET_Y,
+    WAYPOINT_X,
+    WAYPOINT_Y
 )
 from src.estimation.ekf import ExtendedKalmanFilter
 import time
@@ -34,6 +36,7 @@ import mujoco.viewer
 
 import cv2
 import numpy as np
+from src.control.waypoint_controller import WaypointController
 
 
 MODEL_PATH = (
@@ -174,6 +177,18 @@ def main():
         ]
     )
 
+    waypoint_controller = WaypointController()
+
+    target_waypoint = np.array(
+        [
+            WAYPOINT_X,
+            WAYPOINT_Y
+        ],
+        dtype=float
+    )
+
+    waypoint_reached_message_shown = False
+
 
 
 
@@ -219,14 +234,36 @@ def main():
     sigma_y_history = []
     sigma_theta_history = []
 
+    ekf_state = ekf.state.copy()
+
     with mujoco.viewer.launch_passive(model, data) as viewer:
 
         while viewer.is_running():
 
-            
-            
-            v_command = 0.03
-            omega_command = 0.05
+            (
+                v_command,
+                omega_command,
+                waypoint_reached,
+                waypoint_distance
+            ) = waypoint_controller.compute(
+                ekf_state,
+                target_waypoint
+            )
+
+
+            if (
+                waypoint_reached
+                and
+                not waypoint_reached_message_shown
+            ):
+
+                print(
+                    "\nWaypoint reached."
+                )
+
+                waypoint_reached_message_shown = True
+
+
 
             omega_left, omega_right = velocity_to_wheels(
                 v_command,
@@ -511,6 +548,13 @@ def main():
                     f"x={ekf_state[0]:.3f}, "
                     f"y={ekf_state[1]:.3f}, "
                     f"theta={ekf_state[2]:.3f}"
+                )
+
+                print(
+                    f"CONTROL: "
+                    f"distance={waypoint_distance:.3f} m, "
+                    f"v={v_command:.3f} m/s, "
+                    f"omega={omega_command:.3f} rad/s"
                 )
 
                 print(
