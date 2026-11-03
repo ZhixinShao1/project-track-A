@@ -2,7 +2,10 @@ from src.sensors.wheel_encoder import WheelEncoder
 from src.estimation.odometry import Odometry
 from src.control.differential_drive import velocity_to_wheels
 from src.utils.transforms import quaternion_to_yaw
-from src.utils.plotting import plot_trajectory
+from src.utils.plotting import (
+    plot_trajectory,
+    plot_ekf_uncertainty
+)
 from src.perception.aruco_detector import ArucoDetector
 from config import (
     CAMERA_WIDTH,
@@ -208,6 +211,13 @@ def main():
 
     ekf_x_history = []
     ekf_y_history = []
+
+    true_theta_history = []
+    ekf_theta_history = []
+
+    sigma_x_history = []
+    sigma_y_history = []
+    sigma_theta_history = []
 
     with mujoco.viewer.launch_passive(model, data) as viewer:
 
@@ -453,6 +463,26 @@ def main():
             ekf_y_history.append(
                 ekf_state[1]
             )
+
+            true_theta_history.append(
+                theta_true
+            )
+
+            ekf_theta_history.append(
+                ekf_state[2]
+            )
+
+            sigma_x_history.append(
+                np.sqrt(ekf.P[0, 0])
+            )
+
+            sigma_y_history.append(
+                np.sqrt(ekf.P[1, 1])
+            )
+
+            sigma_theta_history.append(
+                np.sqrt(ekf.P[2, 2])
+            )
             current_second = int(data.time)
 
 
@@ -517,6 +547,16 @@ def main():
     odom_y_history,
     ekf_x_history,
     ekf_y_history
+    )
+
+    plot_ekf_uncertainty(
+    time_history,
+    true_x_history,
+    ekf_x_history,
+    true_theta_history,
+    ekf_theta_history,
+    sigma_x_history,
+    sigma_theta_history
     )
 
 
