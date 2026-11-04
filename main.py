@@ -6,6 +6,8 @@ from src.utils.plotting import (
     plot_trajectory,
     plot_ekf_uncertainty
 )
+from src.utils.evaluation import save_trial_results
+import os
 from src.perception.aruco_detector import ArucoDetector
 from config import (
     CAMERA_WIDTH,
@@ -25,7 +27,9 @@ from config import (
     CAMERA_OFFSET_X,
     CAMERA_OFFSET_Y,
     WAYPOINTS,
-    LIDAR_UPDATE_INTERVAL
+    LIDAR_UPDATE_INTERVAL,
+    CAMERA_RANGE_NOISE_STD,
+    CAMERA_BEARING_NOISE_STD_DEG
 )
 from src.estimation.ekf import ExtendedKalmanFilter
 import time
@@ -52,7 +56,15 @@ MODEL_PATH = (
 
 
 def main():
-    model = mujoco.MjModel.from_xml_path(str(MODEL_PATH))
+    run_seed = int(
+        os.getenv("RUN_SEED", "2026")
+    )
+
+    np.random.seed(run_seed)
+
+    model = mujoco.MjModel.from_xml_path(
+        str(MODEL_PATH)
+    )
     data = mujoco.MjData(model)
 
     renderer = mujoco.Renderer(
@@ -128,6 +140,25 @@ def main():
     base_qpos = model.jnt_qposadr[
         base_joint_id
     ]
+
+    # Robot root body
+    robot_root_body_id = int(
+        model.jnt_bodyid[base_joint_id]
+    )
+
+    # Test obstacle
+    obstacle_geom_id = mujoco.mj_name2id(
+        model,
+        mujoco.mjtObj.mjOBJ_GEOM,
+        "obstacle_1"
+    )
+
+    if obstacle_geom_id == -1:
+        raise ValueError(
+            "obstacle_1 geom not found."
+        )
+
+    collision_detected = False
 
 
 
@@ -243,6 +274,12 @@ def main():
 
     time_history = []
 
+    v_history = []
+    omega_history = []
+    camera_visible_history = []
+
+    finish_sample_count = None
+
     true_x_history = []
     true_y_history = []
 
@@ -260,6 +297,21 @@ def main():
     sigma_theta_history = []
 
     ekf_state = ekf.state.copy()
+
+    def is_robot_body(body_id):
+
+        body_id = int(body_id)
+
+        while body_id != 0:
+
+            if body_id == robot_root_body_id:
+                return True
+
+            body_id = int(
+                model.body_parentid[body_id]
+            )
+
+        return False
 
     with mujoco.viewer.launch_passive(model, data) as viewer:
 
@@ -445,6 +497,10 @@ def main():
 
                 if docking_complete:
 
+                    finish_sample_count = (
+                        len(time_history) + 1
+                    )
+
                     print(
                         "\n=========================="
                     )
@@ -487,6 +543,34 @@ def main():
            
 
             mujoco.mj_step(model, data)
+
+            
+# COLLISION EVALUATION ONLY
+
+
+            for contact_id in range(data.ncon):
+
+                contact = data.contact[contact_id]
+
+                geom1 = int(contact.geom1)
+                geom2 = int(contact.geom2)
+
+                if geom1 == obstacle_geom_id:
+                    other_geom_id = geom2
+
+                elif geom2 == obstacle_geom_id:
+                    other_geom_id = geom1
+
+                else:
+                    continue
+
+                other_body_id = int(
+                    model.geom_bodyid[other_geom_id]
+                )
+
+                if is_robot_body(other_body_id):
+
+                    collision_detected = True
 
             
 
@@ -604,6 +688,43 @@ def main():
                         landmark_forward_base
                     )
 
+                
+# ADD CAMERA MEASUREMENT NOISE
+
+
+                if (
+                    marker_detected
+                    and base_range is not None
+                    and base_bearing is not None
+                    and np.isfinite(base_range)
+                    and np.isfinite(base_bearing)
+                ):
+
+                    base_range = max(
+                        0.01,
+                        float(base_range) + np.random.normal(
+                            0.0,
+                            CAMERA_RANGE_NOISE_STD
+                        )
+                    )
+
+                    noisy_bearing = (
+                        float(base_bearing)
+                        + np.random.normal(
+                            0.0,
+                            np.deg2rad(
+                                CAMERA_BEARING_NOISE_STD_DEG
+                            )
+                        )
+                    )
+
+                    base_bearing = float(
+                        np.arctan2(
+                            np.sin(noisy_bearing),
+                            np.cos(noisy_bearing)
+                        )
+                    )
+
 
 # EKF camera update
                 if (
@@ -687,6 +808,18 @@ def main():
 
             time_history.append(
                 data.time
+            )
+
+            v_history.append(
+                float(v_command)
+            )
+
+            omega_history.append(
+                float(omega_command)
+            )
+
+            camera_visible_history.append(
+                int(marker_detected)
             )
 
             true_x_history.append(
@@ -862,6 +995,28 @@ def main():
 
     renderer.close()
     cv2.destroyAllWindows()
+
+    save_trial_results(
+        time_history,
+        true_x_history,
+        true_y_history,
+        true_theta_history,
+        ekf_x_history,
+        ekf_y_history,
+        ekf_theta_history,
+        sigma_x_history,
+        sigma_y_history,
+        sigma_theta_history,
+        v_history,
+        omega_history,
+        camera_visible_history,
+        docking_complete,
+        all_waypoints_reached,
+        collision_detected,
+        finish_sample_count=finish_sample_count,
+        scenario="final_nominal",
+        seed=run_seed
+    )
 
 
     plot_trajectory(
