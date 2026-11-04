@@ -40,6 +40,7 @@ from src.control.waypoint_controller import WaypointController
 from src.sensors.lidar import Lidar2D
 from src.utils.lidar_visualization import draw_lidar_scan
 from src.control.obstacle_avoidance import ObstacleAvoidance
+from src.control.visual_docking import VisualDockingController
 
 
 MODEL_PATH = (
@@ -188,6 +189,11 @@ def main():
     waypoint_controller = WaypointController()
     obstacle_avoidance = ObstacleAvoidance()
 
+    visual_docking = VisualDockingController()
+
+    docking_complete = False
+    docking_status = "NAVIGATION"
+
     waypoints = np.array(
         WAYPOINTS,
         dtype=float
@@ -223,6 +229,13 @@ def main():
     last_print_time = -1
     last_camera_time = -1.0
     last_lidar_time = -1.0
+
+    marker_detected = False
+    marker_range = None
+    marker_bearing = None
+
+    base_range = None
+    base_bearing = None
 
     lidar_angles = None
     lidar_ranges = None
@@ -282,6 +295,21 @@ def main():
                 last_lidar_time = data.time
 
 
+            
+# NAVIGATION / DOCKING STATE MACHINE
+
+
+# Reset reporting values
+            obstacle_detected = False
+            front_distance = None
+            left_distance = None
+            right_distance = None
+
+
+            
+            # MODE 1: WAYPOINT NAVIGATION
+            
+
             if not all_waypoints_reached:
 
                 target_waypoint = waypoints[
@@ -298,62 +326,153 @@ def main():
                     target_waypoint
                 )
 
-                
+                # Waypoint switching
+                if waypoint_reached:
+
+                    print(
+                        f"\nWaypoint "
+                        f"{current_waypoint_index + 1} reached."
+                    )
+
+                    current_waypoint_index += 1
+
+                    if current_waypoint_index >= len(waypoints):
+
+                        all_waypoints_reached = True
+
+                        print(
+                            "\nPre-docking point reached."
+                        )
+
+                        print(
+                            "Switching to VISUAL DOCKING."
+                        )
+
+                if not all_waypoints_reached:
+
+                    # Existing LiDAR-based detour navigation
+                    (
+                        v_command,
+                        omega_command,
+                        obstacle_detected,
+                        front_distance,
+                        left_distance,
+                        right_distance
+                    ) = obstacle_avoidance.compute(
+                        lidar_angles,
+                        lidar_ranges,
+                        nominal_v,
+                        nominal_omega,
+                        ekf_state,
+                        waypoint_controller,
+                        goal_active=True,
+                        primary_goal=target_waypoint
+                    )
+
+                    docking_status = "NAVIGATION"
+
+                else:
+
+                    # Stop during mode transition
+                    v_command = 0.0
+                    omega_command = 0.0
+
+                    docking_status = "SWITCHING_TO_DOCKING"
+
+
+            
+            # MODE 2: VISUAL DOCKING
+            
+
+            elif not docking_complete:
+
+                # Use only recent, valid camera measurements
+                camera_valid = (
+                    marker_detected
+                    and base_range is not None
+                    and base_bearing is not None
+                    and np.isfinite(base_range)
+                    and np.isfinite(base_bearing)
+                    and data.time - last_camera_time <= 0.15
+                )
+
+                if camera_valid:
+
+                    docking_range = base_range
+                    docking_bearing = base_bearing
+
+                else:
+
+                    docking_range = None
+                    docking_bearing = None
+
+                (
+                    v_command,
+                    omega_command,
+                    docking_complete,
+                    docking_status
+                ) = visual_docking.compute(
+                    ekf_state,
+                    docking_range,
+                    docking_bearing
+                )
+
+                # LiDAR safety check during forward docking
+                if (
+                    not docking_complete
+                    and v_command > 0.0
+                    and lidar_angles is not None
+                    and lidar_ranges is not None
+                ):
+
+                    front_mask = (
+                        np.abs(lidar_angles)
+                        <= np.deg2rad(25.0)
+                    )
+
+                    if np.any(front_mask):
+
+                        nearest_front = np.min(
+                            lidar_ranges[front_mask]
+                        )
+
+                        if nearest_front < 0.23:
+
+                            v_command = 0.0
+                            omega_command = 0.0
+
+                            docking_status = "BLOCKED_BY_LIDAR"
+
+                if docking_complete:
+
+                    print(
+                        "\n=========================="
+                    )
+
+                    print(
+                        "DOCKING COMPLETE"
+                    )
+
+                    print(
+                        "=========================="
+                    )
+
+
+            
+            # MODE 3: COMPLETE
+            
 
             else:
 
-                nominal_v = 0.0
-                nominal_omega = 0.0
+                v_command = 0.0
+                omega_command = 0.0
 
-                waypoint_reached = True
-                waypoint_distance = 0.0
-
-
-            if (
-                waypoint_reached
-                and
-                not all_waypoints_reached
-            ):
-
-                print(
-                    f"\nWaypoint "
-                    f"{current_waypoint_index + 1} reached."
-                )
-
-                current_waypoint_index += 1
-
-                if current_waypoint_index >= len(
-                    waypoints
-                ):
-
-                    all_waypoints_reached = True
-
-                    print(
-                        "\nAll waypoints reached."
-                    )
-
-                
-# LIDAR OBSTACLE AVOIDANCE
+                docking_status = "COMPLETE"
 
 
-            (
-                v_command,
-                omega_command,
-                obstacle_detected,
-                front_distance,
-                left_distance,
-                right_distance
-            ) = obstacle_avoidance.compute(
-                lidar_angles,
-                lidar_ranges,
-                nominal_v,
-                nominal_omega,
-                ekf_state,
-                waypoint_controller,
-                goal_active=not all_waypoints_reached,
-                primary_goal=target_waypoint
-            )
-
+            
+            # DIFFERENTIAL DRIVE
+           
 
             omega_left, omega_right = velocity_to_wheels(
                 v_command,
@@ -646,20 +765,28 @@ def main():
                 if not all_waypoints_reached:
 
                     print(
-                        f"CONTROL: "
-                        f"waypoint="
-                        f"{current_waypoint_index + 1}/"
-                        f"{len(waypoints)}, "
-                        f"distance={waypoint_distance:.3f} m, "
-                        f"v={v_command:.3f} m/s, "
-                        f"omega={omega_command:.3f} rad/s"
+                        f"MODE: NAVIGATION | "
+                        f"waypoint={current_waypoint_index + 1}/"
+                        f"{len(waypoints)} | "
+                        f"distance={waypoint_distance:.3f} m | "
+                        f"v={v_command:.3f} | "
+                        f"omega={omega_command:.3f}"
+                    )
+
+                elif not docking_complete:
+
+                    print(
+                        f"MODE: DOCKING | "
+                        f"status={docking_status} | "
+                        f"v={v_command:.3f} | "
+                        f"omega={omega_command:.3f}"
                     )
 
                 else:
 
                     print(
-                        "CONTROL: "
-                        "All waypoints completed."
+                        "MODE: COMPLETE | "
+                        "Robot stopped."
                     )
 
                 if (
@@ -702,6 +829,13 @@ def main():
                 else:
                     print(
                         "CAMERA: ArUco marker not visible"
+                    )
+
+                if all_waypoints_reached:
+
+                    print(
+                        f"ARUCO DETECTOR: "
+                        f"{aruco_detector.last_detection_status}"
                     )
 
                 if lidar_ranges is not None:

@@ -13,6 +13,7 @@ class ArucoDetector:
     ):
 
         self.target_id = target_id
+        self.last_detection_status = "NO_ID"
 
         self.camera_matrix = camera_matrix
 
@@ -30,6 +31,10 @@ class ArucoDetector:
 
         self.parameters = (
             cv2.aruco.DetectorParameters()
+        )
+
+        self.parameters.cornerRefinementMethod = (
+            cv2.aruco.CORNER_REFINE_SUBPIX
         )
 
         self.detector = cv2.aruco.ArucoDetector(
@@ -52,6 +57,8 @@ class ArucoDetector:
 
 
     def detect(self, image):
+
+        self.last_detection_status = "NO_ID"
 
         annotated_image = image.copy()
 
@@ -89,7 +96,9 @@ class ArucoDetector:
 
                 if marker_id == self.target_id:
 
-                    detected = True
+                    self.last_detection_status = "POSE_INVALID"
+
+                    
 
                     target_corners = (
                         corners[index]
@@ -110,6 +119,7 @@ class ArucoDetector:
                     )
 
                     if (
+                        
                         success
                         and
                         np.all(np.isfinite(rvec))
@@ -119,7 +129,8 @@ class ArucoDetector:
                         tvec[2, 0] > 0.0
                     ):
 
-                        
+                        detected = True
+                        self.last_detection_status = "VALID"
 
                         marker_x = float(
                             tvec[0, 0]
