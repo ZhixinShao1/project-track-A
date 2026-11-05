@@ -41,11 +41,9 @@ The robot uses wheel encoders and a camera for EKF based localisation, a state f
 ## 3. Installation
 
 **Requirements:**
- Python 3
- Windows with PowerShell
- Dependencies listed in `requirements.txt`
+ Python 3.13.16, Windows with PowerShell, Dependencies listed in `requirements.txt`
 
-Clone or download the repository and open a terminal in the project directory.
+First, clone or download the repository and open a terminal in the project directory.
 
 Create and activate a virtual environment:
 
