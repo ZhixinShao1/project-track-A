@@ -14,16 +14,27 @@ The robot uses wheel encoders and a camera for EKF based localisation, a state f
  File / Folder | Description 
 
  `main.py` | Runs and integrates the complete simulation.
+
  `config.py` | Robot parameters, sensor noise and controller settings. 
+
  `model_verification.py` | Controllability and observability analysis. 
+
  `src/model/` | Robot motion and state space models.
+
  `src/sensors/` | Wheel encoder and LiDAR simulation.
+
  `src/perception/` | ArUco marker detection.
- `src/estimation/` | Wheel odometry and EKF localisation. 
+
+ `src/estimation/` | Wheel odometry and EKF localisation.
+
  `src/control/` | Waypoint navigation, obstacle avoidance and visual docking. 
+
  `src/utils/` | Coordinate transformations, visualisation and evaluation. 
+
  `models/` | MuJoCo robot and environment models. 
+
  `tools/` | Scripts for summarising experimental results. 
+ 
  `results/` | Saved simulation data and evaluation results. 
 
 ## 3. Installation
