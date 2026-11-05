@@ -91,4 +91,4 @@ $env:RUN_SEED="2026"
 python main.py
 ```
 
-The experiments use seeds 2026–2030. Sensor noise and obstacle configurations can be adjusted through `config.py`, `main.py` and the MuJoCo scene files. Experimental summaries can be generated using the scripts in `tools/`.
+The experiments use seeds 2026 - 2030. Sensor noise and obstacle configurations can be adjusted through `config.py`, `main.py` and the MuJoCo scene files. Experimental summaries can be generated using the scripts in `tools/`.
