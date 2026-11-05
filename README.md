@@ -1,6 +1,7 @@
 # TurtleBot3 Visual Waypoint Navigation and Docking
 
 **Project:** Track A 
+
 **Platform:** TurtleBot3 Waffle Pi (MuJoCo Simulation)
 
 ## 1. Project Overview
@@ -11,31 +12,31 @@ The robot uses wheel encoders and a camera for EKF based localisation, a state f
 
 ## 2. Project Structure
 
- File / Folder | Description 
+ File Description 
 
- `main.py` | Runs and integrates the complete simulation.
+ `main.py` : Runs and integrates the complete simulation.
 
- `config.py` | Robot parameters, sensor noise and controller settings. 
+ `config.py` : Robot parameters, sensor noise and controller settings. 
 
- `model_verification.py` | Controllability and observability analysis. 
+ `model_verification.py` : Controllability and observability analysis. 
 
- `src/model/` | Robot motion and state space models.
+ `src/model/` : Robot motion and state space models.
 
- `src/sensors/` | Wheel encoder and LiDAR simulation.
+ `src/sensors/` : Wheel encoder and LiDAR simulation.
 
- `src/perception/` | ArUco marker detection.
+ `src/perception/` : ArUco marker detection.
 
- `src/estimation/` | Wheel odometry and EKF localisation.
+ `src/estimation/` : Wheel odometry and EKF localisation.
 
- `src/control/` | Waypoint navigation, obstacle avoidance and visual docking. 
+ `src/control/` : Waypoint navigation, obstacle avoidance and visual docking. 
 
- `src/utils/` | Coordinate transformations, visualisation and evaluation. 
+ `src/utils/` : Coordinate transformations, visualisation and evaluation. 
 
- `models/` | MuJoCo robot and environment models. 
+ `models/` : MuJoCo robot and environment models. 
 
- `tools/` | Scripts for summarising experimental results. 
- 
- `results/` | Saved simulation data and evaluation results. 
+ `tools/` : Scripts for summarising experimental results. 
+
+ `results/` : Saved simulation data and evaluation results. 
 
 ## 3. Installation
 
