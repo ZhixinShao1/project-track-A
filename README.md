@@ -4,6 +4,10 @@
 
 **Platform:** TurtleBot3 Waffle Pi (MuJoCo Simulation)
 
+**Group number:** 21
+
+**Team members:** Zhixin Shao (25550169)
+
 ## 1. Project Overview
 
 This project develops an autonomous navigation and visual docking system for a TurtleBot3 robot using MuJoCo simulation.
