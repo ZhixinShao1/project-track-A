@@ -51,6 +51,8 @@ Create and activate a virtual environment:
 
 ```powershell
 python -m venv .venv
+```
+```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
@@ -84,6 +86,8 @@ The simulation supports fixed random seeds. To reproduce a run with a specific s
 
 ```powershell
 $env:RUN_SEED="2026"
+```
+```powershell
 python main.py
 ```
 
