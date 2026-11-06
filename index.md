@@ -1,4 +1,6 @@
-
+---
+layout: default
+---
 ---
 title: TurtleBot3 Visual Waypoint Navigation and Docking
 ---
