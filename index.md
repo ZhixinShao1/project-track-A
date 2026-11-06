@@ -3,7 +3,6 @@
 title: TurtleBot3 Visual Waypoint Navigation and Docking
 ---
 
-# TurtleBot3 Visual Waypoint Navigation and Docking
 
 **UTS 41014  Sensors and Control for Mechatronic Systems**
 
