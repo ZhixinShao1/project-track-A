@@ -108,8 +108,9 @@ $$
 
 The program then calculates the distance and direction from the robot base to the marker. These are the measurements used by the EKF and docking controller. Without this correction, the 0.10 m camera offset could cause a large error compared with the allowed docking distance error of 0.015 m. In normal trials, no extra camera noise is added, but the EKF still assumes that measurements have some uncertainty. Other trials increase sensor noise to test the system.
 
+![Coordinate Frames](assets/Frame_Diagram.png)
 
-*Figure 2. Frame definitions and camera to base measurement conversion.*
+*Figure 2. Coordinate frames and camera to base measurement conversion.*
 
 ## 4. EKF-Based State Estimation
 
@@ -176,6 +177,10 @@ The distance gain is 0.90 and the bearing gain is 2.0. The lower forward speed l
 ### 5.4 Controller Tuning
 
 An early test with a slower speed setting took 38.15 s and gave 0.0774 m position RMSE. After increasing the speed limit, the five normal trials took 21.34 s on average, with 0.1078 m RMSE. The robot finished faster, but the estimated position was less accurate. 
+
+![MuJoCo Simulation Environment](assets/MuJoCo_simulation_environment.png)
+
+*Figure 4. MuJoCo simulation environment.*
 
 ## 6. Experimental Results and Robustness
 
