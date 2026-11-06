@@ -10,7 +10,7 @@ layout: default
 
 **Team Members: Zhixin Shao (25550169)**
 
-[Code Repository](https://github.com/ZhixinShao1/project-track-A) | 
+[Code Repository](https://github.com/ZhixinShao1/project-track-A) | [Demon video](https://youtu.be/Ua94hTkshi8)
 
 ## Abstract
 
