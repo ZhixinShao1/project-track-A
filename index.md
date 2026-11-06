@@ -49,9 +49,25 @@ To check the state space model, it was linearised at a forward speed of 0.10 m/s
 
 The resulting continuous time matrices are:
 
+
 $$
-A=\begin{bmatrix}0&0&0\\0&0&0.10\\0&0&0\end{bmatrix},\qquad
-B=\begin{bmatrix}1&0\\0&0\\0&1\end{bmatrix}.
+A=
+\left[
+\begin{array}{ccc}
+0 & 0 & 0 \\
+0 & 0 & 0.10 \\
+0 & 0 & 0
+\end{array}
+\right],
+\qquad
+B=
+\left[
+\begin{array}{cc}
+1 & 0 \\
+0 & 0 \\
+0 & 1
+\end{array}
+\right]
 $$
 
 The controllability matrix was formed using B, AB, and A²B, gives a rank of 3, which matches the three robot states. This means the robot can control all three states near the selected operating point. Also it cannot move directly sideways, but it can turn and move forward to change its sideways position. 
