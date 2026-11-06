@@ -15,6 +15,7 @@ title: TurtleBot3 Visual Waypoint Navigation and Docking
 This project develops an autonomous navigation and visual docking system for a simulated TurtleBot3 Waffle Pi robot using MuJoCo.
 
 The system combines wheel encoders, 2D LiDAR, ArUco marker detection, EKF localisation and feedback control.
+xxxxxxxxxxxxx
 
 ## System Design
 
