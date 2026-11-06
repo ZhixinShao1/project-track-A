@@ -134,6 +134,7 @@ In the five normal trials, mean position RMSE was 0.1078 m and mean heading RMSE
 
 The ±2σ coverage rates were 48.79% for x, 33.74% for y, and 27.06% for heading. For an ideal Gaussian model, the reference value is about 95.45%. Although the measured values are lower, the EKF still provided useful state estimates for navigation.
 
+![Robot State Estimation Comparison](assets/ekf_trajectory.png)
 
 *Figure 3. State estimation errors and uncertainty intervals from an actual simulation run.*
 
