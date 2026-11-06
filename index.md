@@ -26,8 +26,9 @@ The system uses four connected stages. Firstly, wheel encoder and camera observa
 
 In this project, encoders support continuous prediction, camera observations limit odometry drift, LiDAR provides obstacle information and the controllers turn state estimates into robot motion. MuJoCo ground truth is not supplied to the feedback controller. It is used only for plots, error metrics, collision evaluation where implemented, and final success verification. 
 
+![System Pipeline](assets/System_Pipeline.png)
 
-*Figure 1. Integrated sensing, estimtion and feedback control pipeline.*
+*Figure 1. System Pipeline.*
 
 ## 2. State Space Modelling
 
