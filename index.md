@@ -29,16 +29,13 @@ In this project, encoders support continuous prediction, camera observations lim
 
                               Figure 1. Integrated sensing, estimation and feedback control pipeline.
 
-## Experimental Results
+## 2. State Space Modelling
+## 2.1 Robot Motion Model
 
-The system was evaluated across four conditions with five trials per condition.
-
-| Condition | Success Rate |
-
-| Nominal | 100% |
-| High Encoder Noise | 100% |
-| High Camera Noise | 0% |
-| Shifted Obstacle | 100% |
+The TurtleBot3 is modelled as a planar differential drive robot with state x = [x, y, θ]ᵀ and control input u = [v, ω]ᵀ. Here x and y represent world frame position, θ is heading, v and ω are forward and angular velocities. Assuming planar motion and negligible wheel slip, the nonlinear equations are:
+\[
+\dot{x}=v\cos\theta,\qquad \dot{y}=v\sin\theta,\qquad \dot{\theta}=\omega.
+\]
 
 ## Demo Video
 
