@@ -49,7 +49,6 @@ To check the state space model, it was linearised at a forward speed of 0.10 m/s
 
 The resulting continuous time matrices are:
 
-
 $$
 A=
 \left[
@@ -77,8 +76,13 @@ The controllability matrix was formed using B, AB, and A²B, gives a rank of 3, 
 The camera measures the distance and direction to an ArUco marker whose position is known. These two measurements can be predicted from the robot position and heading. For a marker at (xL, yL), the measurement model is:
 
 $$
-h(\mathbf{x})=\begin{bmatrix}\sqrt{(x_L-x)^2+(y_L-y)^2}\\
-\operatorname{atan2}(y_L-y,x_L-x)-\theta\end{bmatrix}.
+h(\mathbf{x})=
+\left[
+\begin{array}{c}
+\sqrt{(x_L-x)^2+(y_L-y)^2} \\
+\mathrm{atan2}(y_L-y,x_L-x)-\theta
+\end{array}
+\right]
 $$
 
 The measurement Jacobian H was calculated from this model and used with the motion matrix to check observability. With the marker at (1.80, 0.00) m, it gives a rank of 3 at the selected operating point. This means the model can estimate all three states locally when the robot moves and receives valid marker measurements. Because one camera observation measures only distance and direction, so the EKF also uses the robot motion over time. If the marker is not visible, the EKF continues predicting from encoder data until the camera detects it again.
@@ -140,8 +144,9 @@ The ±2σ coverage rates were 48.79% for x, 33.74% for y, and 27.06% for heading
 The robot uses a proportional feedback controller. It calculates the distance d to the waypoint at (1.35, 0.00) m and the angle error α between its estimated heading and the waypoint direction. It then calculates the forward and turning speeds using:
 
 $$
-v=\operatorname{clip}(2.0d\max(0,\cos\alpha),0,0.16),\qquad
-\omega=\operatorname{clip}(1.5\alpha,-0.80,0.80).
+v=\mathrm{clip}(2.0d\max(0,\cos\alpha),0,0.16),
+\qquad
+\omega=\mathrm{clip}(1.5\alpha,-0.80,0.80)
 $$
 
 The distance gain 2.0 makes the robot move faster when it is farther from the waypoint. The heading gain 1.5 makes it turn towards the waypoint. The cosine term reduces forward speed when the robot is facing the wrong direction. The 'clip' function limits forward speed to 0 - 0.16 m/s and turning speed to −0.80 to 0.80 rad/s. The waypoint is considered reached when the robot is within 0.03 m of it, so the robot does not need to stop at an exact mathematical point. These proportional gains were chosen to provide simple, stable control in the simulation. The 0.16 m/s speed limit keeps the robot from moving too quickly while allowing it to finish the task in a reasonable time. 
