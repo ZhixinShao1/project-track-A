@@ -94,6 +94,44 @@ The program then calculates the distance and direction from the robot base to th
 
 ### 4.1 EKF Design
 
+Wheel encoder errors can build up over time, so encoder data alone may give an inaccurate position. The EKF combines encoder based motion prediction with camera measurements whenever the ArUco marker is visible. It estimates x, y and θ and keeps a 3 × 3 covariance matrix P to describe uncertainty.
+
+During prediction, the EKF uses the speed from the encoders to estimate where the robot will move next. The Jacobian F updates its uncertainty, while Q represents possible prediction errors. During correction, the EKF compares the camera measured distance and direction with the values expected from the estimated position. The Jacobian H measurements covariance R, and Kalman gain determine how much the estimate should change. The program also handles angle wraparound at +π and -π. If the camera cannot see the marker, the EKF skips correction and continues prediction.
+
+An EKF was chosen because the robot motion and the camera bearing measurement are nonlinear. The EKF can use these models and estimat how uncertain the robot position and heading are.
+
+### 4.2 Parameter Selection and Justification
+
+The initial position standard deviations are 0.02 m for x and y, and the initial heading standard deviation is 0.035 rad. These values show that the robot starts at a mostly known position, but some uncertainty is allowed. For the process model, the standard deviations are 0.01 m, 0.01 m and 0.02 rad. For camera distance and bearing, they are 0.02 m and 0.035 rad. The program squares these values to form the diagonal elements of P₀, Q, and R. It also scales the process noise term by the simulation time step.
+
+These values were selected as starting settings for the simulation. The aim was to balance encoder based prediction and camera based correction. Their performance was evaluated through simulation experiments under different sensor noise conditions. A larger Q tells the EKF to trust its motion prediction less. A smaller R tells it to trust the camera more. This helps when camera measurements are accurate but can cause bigger errors when they are noisy. The robot completed its main tasks with these settings, although the coverage results show that the covariance values could be improved.
+
+### 4.3 Estimation Performance
+
+The EKF estimates were compared with the true states recorded by MuJoCo. Position RMSE measures average position error and heading RMSE measures average angle error. ±2σ coverage is the percentage of time samples in which the true value falls within two estimated standard deviations of the EKF result.
+
+In the five normal trials, mean position RMSE was 0.1078 m and mean heading RMSE was 0.3338 rad. The robot successfully navigated, avoided the obstacle and docked in all five trials using these estimates. This shows that combining encoder and camera data gave the controller enough information to complete the task.
+
+The ±2σ coverage rates were 48.79% for x, 33.74% for y, and 27.06% for heading. For an ideal Gaussian model, the reference value is about 95.45%. Although the measured values are lower, the EKF still provided useful state estimates for navigation.
+
+
+*Figure 3. State estimation errors and uncertainty intervals from an actual simulation run.*
+
+## 5. Feedback Control and Visual Docking
+
+### 5.1 Waypoint Navigation
+
+The robot uses a proportional feedback controller. It calculates the distance d to the waypoint at (1.35, 0.00) m and the angle error α between its estimated heading and the waypoint direction. It then calculates the forward and turning speeds using:
+
+$$
+v=\operatorname{clip}(2.0d\max(0,\cos\alpha),0,0.16),\qquad
+\omega=\operatorname{clip}(1.5\alpha,-0.80,0.80).
+$$
+
+The distance gain 2.0 makes the robot move faster when it is farther from the waypoint. The heading gain 1.5 makes it turn towards the waypoint. The cosine term reduces forward speed when the robot is facing the wrong direction. The 'clip' function limits forward speed to 0 - 0.16 m/s and turning speed to −0.80 to 0.80 rad/s. The waypoint is considered reached when the robot is within 0.03 m of it, so the robot does not need to stop at an exact mathematical point. These proportional gains were chosen to provide simple, stable control in the simulation. The 0.16 m/s speed limit keeps the robot from moving too quickly while allowing it to finish the task in a reasonable time. 
+
+### 5.2 LiDAR Based Obstacle Avoidance
+
 
 
 ## Demo Video
