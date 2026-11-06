@@ -33,9 +33,12 @@ In this project, encoders support continuous prediction, camera observations lim
 ## 2.1 Robot Motion Model
 
 The TurtleBot3 is modelled as a planar differential drive robot with state x = [x, y, θ]ᵀ and control input u = [v, ω]ᵀ. Here x and y represent world frame position, θ is heading, v and ω are forward and angular velocities. Assuming planar motion and negligible wheel slip, the nonlinear equations are:
-\[
-\dot{x}=v\cos\theta,\qquad \dot{y}=v\sin\theta,\qquad \dot{\theta}=\omega.
-\]
+
+$$
+\dot{x}=v\cos\theta,\qquad
+\dot{y}=v\sin\theta,\qquad
+\dot{\theta}=\omega
+$$
 
 ## Demo Video
 
@@ -48,3 +51,13 @@ To be added.
 ## Generative AI Declaration
 
 To be completed with the actual tools and purposes.
+
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  }
+};
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
