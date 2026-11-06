@@ -237,7 +237,7 @@ Zhixin Shao (25550169) -- Entire Work
 
 ## 10. Generative AI Declaration
 
-
+I used ChatGPT to get some ideas early in the project and used it to help me fix some bugs.
 
 <script>
 window.MathJax = {
