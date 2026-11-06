@@ -136,7 +136,15 @@ The ±2σ coverage rates were 48.79% for x, 33.74% for y, and 27.06% for heading
 
 ![Robot State Estimation Comparison](assets/ekf_trajectory.png)
 
-*Figure 3. State estimation errors and uncertainty intervals from an actual simulation run.*
+*Figure 3. Comparison of ground truth, wheel odometry and EKF estimated trajectories.*
+
+![EKF Position Error and Uncertainty](assets/ekf_position_error.png)
+
+*Figure 4. EKF position estimation error and ±2σ uncertainty bounds.*
+
+![EKF Heading Error and Uncertainty](assets/ekf_heading_error.png)
+
+*Figure 5. EKF heading estimation error and ±2σ uncertainty bounds.*
 
 ## 5. Feedback Control and Visual Docking
 
@@ -168,9 +176,6 @@ The distance gain is 0.90 and the bearing gain is 2.0. The lower forward speed l
 
 An early test with a slower speed setting took 38.15 s and gave 0.0774 m position RMSE. After increasing the speed limit, the five normal trials took 21.34 s on average, with 0.1078 m RMSE. The robot finished faster, but the estimated position was less accurate. 
 
-
-*Figure 4. Waypoint navigation, obstacle detour and visual docking trajectory.*
-
 ## 6. Experimental Results and Robustness
 
 ### 6.1 Experimental Setup
@@ -189,9 +194,6 @@ The experiment is considered a success only when the following conditions are me
 | Shifted Obstacle | 5/5 | 0.1108 | 0.3022 | 23.65 | 0.0147 |
 
 Each row shows averages from five trials, completion times are measured using MuJoCo simulation time, not real world time.
-
-
-*Figure 5. Strict docking success and estimation error across the four test conditions.*
 
 ### 6.3 Results Discussion
 
