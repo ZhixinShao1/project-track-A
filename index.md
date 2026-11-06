@@ -159,14 +159,14 @@ The experiment is considered a success only when the following conditions are me
 
 ### 6.2 Quantitative Results
 
-| Experimental condition | Success | Position RMSE (m) | Heading RMSE (rad) | Mean successful duration (s) | Mean absolute docking range error (m) |
+| Experimental condition | Success | Position RMSE (m) | Heading RMSE (rad) | Mean simulated completion time (s) | Mean absolute docking range error (m) |
 |---|---:|---:|---:|---:|---:|
 | Nominal | 5/5 | 0.1078 | 0.3338 | 21.34 | 0.0145 |
 | High Encoder Noise | 5/5 | 0.1090 | 0.3335 | 21.34 | 0.0146 |
 | High Camera Noise | 0/5 | 0.1140 | 0.3515 |    | 0.0445 |
 | Shifted Obstacle | 5/5 | 0.1108 | 0.3022 | 23.65 | 0.0147 |
 
-Each row shows averages from five trials. 
+Each row shows averages from five trials, completion times are measured using MuJoCo simulation time, not real world time.
 
 
 *Figure 5. Strict docking success and estimation error across the four test conditions.*
