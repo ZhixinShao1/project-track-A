@@ -212,7 +212,11 @@ Overall, the project met its main goals in simulation. The robot achieved all tr
 
 ## 8. References
 
+Garrido-Jurado, S., Muñoz-Salinas, R., Madrid-Cuevas, F. J., & Marín-Jiménez, M. J. (2014). Automatic generation and detection of highly reliable fiducial markers under occlusion. Pattern Recognition, 47(6), 2280–2292. https://doi.org/10.1016/j.patcog.2014.01.005
 
+Kanayama, Y., Kimura, Y., Miyazaki, F., & Noguchi, T. (1990). A stable tracking control method for an autonomous mobile robot. Proceedings, IEEE International Conference on Robotics and Automation : 13-18 May 1990, 384–389 vol.1. https://doi.org/10.1109/ROBOT.1990.126006
+
+Oh, J. S., & Kim, M. Y. (2025). Regression-Based Docking System for Autonomous Mobile Robots Using a Monocular Camera and ArUco Markers. Sensors (Basel, Switzerland), 25(12), 3742. https://doi.org/10.3390/s25123742
 
 ## 9. Demo Video
 
@@ -220,7 +224,7 @@ Overall, the project met its main goals in simulation. The robot achieved all tr
 
 ## 10. Team Contributions
 
-
+Zhixin Shao (25550169) -- Entire Work
 
 ## 10. Generative AI Declaration
 
